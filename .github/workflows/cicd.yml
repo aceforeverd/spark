@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - v3.0.0-openmldb
+    tags:
+      - v*
   pull_request:
   workflow_dispatch:
 
@@ -28,6 +30,16 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('java/**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+
       - name: compile
         run: |
           ./dev/make-distribution.sh --name openmldbspark --pip --tgz -Phadoop-2.7 -Pyarn
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            spark-*-bin-openmldbspark.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
